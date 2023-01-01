@@ -1,5 +1,3 @@
-using System.IO;
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -40,10 +38,10 @@ app.MapGet("prepare/{uri}", (Uri? imageUrl) =>
 .WithOpenApi();
 
 
-string SplitterHtml = File.ReadAllText(@"wwwroot\splitter.html");
+string splitterHtml = File.ReadAllText(@"wwwroot\splitter.html");
 string ViewerHtml = File.ReadAllText(@"wwwroot\viewer.html");
 
-app.MapGet("", () => Results.Content(SplitterHtml, "text/html"));
+app.MapGet("", () => Results.Content(splitterHtml, "text/html"));
 app.MapGet("viewer", () => Results.Content(ViewerHtml, "text/html"));
 
 app.Run();
@@ -52,3 +50,4 @@ internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
+
