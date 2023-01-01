@@ -7,14 +7,14 @@ EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
 WORKDIR /src
-COPY ["SpriteSplitter.Api/SpriteSplitter.Api.csproj", "SpriteSplitter.Api/"]
+COPY ["Api/SpriteSplitter.Api.csproj", "Api/"]
 RUN dotnet restore "Api/SpriteSplitter.Api.csproj"
 COPY . .
-WORKDIR "/src/SpriteSplitter.Api"
-RUN dotnet build "Api.csproj" -c Release -o /app/build
+WORKDIR "/src/Api"
+RUN dotnet build "SpriteSplitter.Api.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "SpriteSplitter.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
