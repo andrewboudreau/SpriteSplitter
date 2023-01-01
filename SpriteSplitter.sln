@@ -5,7 +5,15 @@ VisualStudioVersion = 17.5.33209.295
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SpriteSplitter.Console", "Console\SpriteSplitter.Console.csproj", "{99B38A3F-A007-4474-9830-C5A3974211B0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpriteSplitter.Api", "Api\SpriteSplitter.Api.csproj", "{0D5A0E10-558D-49E1-99E3-F3DFB0B63A82}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SpriteSplitter.Api", "Api\SpriteSplitter.Api.csproj", "{0D5A0E10-558D-49E1-99E3-F3DFB0B63A82}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{72D3CA35-E161-4783-89FB-0BBE863E7438}"
+	ProjectSection(SolutionItems) = preProject
+		.dockerignore = .dockerignore
+		.gitignore = .gitignore
+		LICENSE.txt = LICENSE.txt
+		readme.md = readme.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
