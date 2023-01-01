@@ -1,0 +1,179 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>AI Sprite Viewer</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            background: #000;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas" style="position: fixed; top: 0; left: 0;"></canvas>
+    <script>
+        range = {
+            from: 0,
+            to: 15,
+
+            *[Symbol.iterator]() { // a shorthand for [Symbol.iterator]: function*()
+                for (let value = this.from; value <= this.to; value++) {
+                    yield value;
+                }
+            }
+        };
+    </script>
+    <script>
+        //const sprites = 16;
+        const key = '4btQ01Fz-2e937252-8888-4c56-b643-c9c7af56dea8-11-20';
+
+        const path = (n) => `.\\sprites-${key}\\sprite-${n}.png`;
+        const files = [...range].map((v, i, a) => ({ name: "", src: path(v), x: Math.random() * canvas.width, y: Math.random() * canvas.height, xvel: Math.random() * 5, yvel: Math.random() * 4 }));
+
+        // Get the canvas element
+        const canvas = document.getElementById("canvas");
+
+        window.addEventListener("resize", () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Get the canvas context
+        const ctx = canvas.getContext("2d");
+
+        // Create an array to store the stars
+        const stars = [];
+
+        // Create a random number of stars
+        for (let i = 0; i < 100; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: Math.random() * 2 + 1,
+                alpha: Math.random(),
+            });
+        }
+
+        // Load the sprites
+        const sprites = [];
+
+        // Load the sprites from the array of file paths
+        for (const file of files) {
+            const sprite = new Image();
+            sprite.src = file.src;
+            sprites.push(sprite);
+        }
+
+        // Load the sprites
+        const sprite1 = sprites[Math.floor(Math.random() * sprites.length)];
+        const sprite2 = sprites[Math.floor(Math.random() * sprites.length)];
+        const sprite3 = sprites[Math.floor(Math.random() * sprites.length)];
+        const sprite4 = sprites[Math.floor(Math.random() * sprites.length)];
+        const sprite5 = sprites[Math.floor(Math.random() * sprites.length)];
+
+        // Set the sprite dimensions
+        const spriteWidth = 32;
+        const spriteHeight = 32;
+
+        // Set the sprite speeds
+        const sprite1SpeedX = 2;
+        const sprite1SpeedY = 3;
+        const sprite2SpeedX = -3;
+        const sprite2SpeedY = 2;
+        const sprite3SpeedX = 1;
+        const sprite3SpeedY = -2;
+
+        // Set the sprite positions
+        let sprite1X = 0;
+        let sprite1Y = 0;
+        let sprite2X = canvas.width - spriteWidth;
+        let sprite2Y = 0;
+        let sprite3X = canvas.width / 2 - spriteWidth / 2;
+        let sprite3Y = canvas.height - spriteHeight;
+
+        // Set the sprite directions
+        let sprite1DirectionX = 1;
+        let sprite1DirectionY = 1;
+        let sprite2DirectionX = -1;
+        let sprite2DirectionY = 1;
+        let sprite3DirectionX = 1;
+        let sprite3DirectionY = -1;
+
+        // Main loop
+        function loop() {
+
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw the stars
+            for (const star of stars) {
+                star.x += 2 * 1 / star.alpha + 1;
+
+                // If the star goes off the bottom of the screen, wrap it around to the top
+                if (star.x > canvas.width) {
+                    star.x = 0;
+                    star.y = Math.random() * canvas.height;
+                    star.radius = Math.random() * 2 + 1;
+                    star.alpha = Math.random();
+                }
+
+                // Draw the star
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                ctx.closePath();
+                ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
+                ctx.fill();
+            }
+
+            // Update the sprite positions
+            sprite1X += sprite1SpeedX * sprite1DirectionX;
+            sprite1Y += sprite1SpeedY * sprite1DirectionY;
+            sprite2X += sprite2SpeedX * sprite2DirectionX;
+            sprite2Y += sprite2SpeedY * sprite2DirectionY;
+            sprite3X += sprite3SpeedX * sprite3DirectionX;
+            sprite3Y += sprite3SpeedY * sprite3DirectionY;
+
+            // Check for sprite1 bounce
+            if (sprite1X < 0 || sprite1X + spriteWidth > canvas.width) {
+                sprite1DirectionX *= -1;
+            }
+            if (sprite1Y < 0 || sprite1Y + spriteHeight > canvas.height) {
+                sprite1DirectionY *= -1;
+            }
+
+            // Check for sprite2 bounce
+            if (sprite2X < 0 || sprite2X + spriteWidth > canvas.width) {
+                sprite2DirectionX *= -1;
+            }
+            if (sprite2Y < 0 || sprite2Y + spriteHeight > canvas.height) {
+                sprite2DirectionY *= -1;
+            }
+
+            // Check for sprite3 bounce
+            if (sprite3X < 0 || sprite3X + spriteWidth > canvas.width) {
+                sprite3DirectionX *= -1;
+            }
+            if (sprite3Y < 0 || sprite3Y + spriteHeight > canvas.height) {
+                sprite3DirectionY *= -1;
+            }
+
+            // Draw the sprites
+            ctx.drawImage(sprite1, sprite1X, sprite1Y);
+            ctx.drawImage(sprite2, sprite2X, sprite2Y);
+            ctx.drawImage(sprite3, sprite3X, sprite3Y);
+
+            // Request the next frame
+            requestAnimationFrame(loop);
+        }
+
+        // Start the main loop
+        loop();
+
+    </script>
+</body>
+</html>

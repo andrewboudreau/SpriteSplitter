@@ -1,0 +1,168 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>AI Sprite Viewer</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            background: #000;
+        }
+
+        #dropzone {
+            border: 1px solid grey;
+            padding: 20px;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+    <form id="form">
+        <label for="url">Image URL:</label>
+        <input type="text" id="url" name="url">
+        <br>
+        <button type="button" id="button">Get Sprites</button>
+    </form>
+
+    <!-- HTML element to drag a file onto -->
+    <div id="dropzone">Drop a file here</div>
+
+    <pre id="result"></pre>
+    <canvas id="canvas" style="position: relative; top: 0; left: 0;"></canvas>
+    <script>
+        const canvas = document.getElementById("canvas");
+        
+        // JavaScript code to handle file drop
+        const dropzone = document.getElementById('dropzone');
+
+        // Add a "dragover" event listener to the dropzone element
+        dropzone.addEventListener('dragover', function (event) {
+            // Prevent the default action (open as link for some elements)
+            event.preventDefault();
+        });
+
+        // Add a "drop" event listener to the dropzone element
+        dropzone.addEventListener('drop', function (event) {
+            // Prevent the default action (open as link for some elements)
+            event.preventDefault();
+
+            // Get the file(s) that were dropped
+            const files = event.dataTransfer.files;
+
+            // Process the file(s)
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                console.log(`File ${i + 1}: ${file.name} (${file.type}, ${file.size} bytes)`);
+
+                // Do something with the file...
+            }
+        });
+
+        const getImage = async (url) => {
+            try {
+                // Send a GET request to the image URL using the fetch() function
+                const response = await fetch(url);
+
+                // Check the response status
+                if (response.ok) {
+                    // Get the image data as a blob
+                    const imageBlob = await response.blob();
+
+                    // Create an Image object from the blob
+                    const image = new Image();
+                    image.src = URL.createObjectURL(imageBlob);
+
+                    // Return the Image object
+                    return image;
+                } else {
+                    // Throw an error if the request failed
+                    throw new Error(`Failed to download image: ${response.status} ${response.statusText}`);
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }        
+        
+        // JavaScript code to handle button click and perform image processing
+        document.getElementById('button').addEventListener('click', function () {
+
+            // Example usage: download an image from a URL, draw it on a canvas, and add the canvas to the document body
+            getImage(url).then(image => {
+
+                debugger;
+                // Set the canvas width to 200 pixels and the height to maintain the image's aspect ratio
+                canvas.width = 200;
+                canvas.height = Math.round((image.height / image.width) * 200);
+
+                // Get the canvas context
+                const ctx = canvas.getContext('2d');
+
+                // Draw the image on the canvas
+                ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+                // Get the pixel data from the canvas
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+                // Find the color at the specified location (x=3, y=3)
+                const color = getColorAt(imageData, 3, 3);
+
+                // Create a 2D boolean array indicating whether each pixel in the image is the same as the color at (x=3, y=3)
+                const sameColorArray = createSameColorArray(imageData, color);
+
+                // Display the resulting array
+                document.getElementById('result').textContent = sameColorArray.map(row => row.join(' ')).join('\n');
+            });
+        });
+
+        // Function to get the color at a specific location in an ImageData object
+        function getColorAt(imageData, x, y) {
+            // Get the index of the pixel in the data array
+            const index = (y * imageData.width + x) * 4;
+
+            // Get the red, green, and blue values of the pixel
+            const r = imageData.data[index];
+            const g = imageData.data[index + 1];
+            const b = imageData.data[index + 2];
+
+            return { r, g, b };
+        }
+
+        // Function to create a 2D boolean array indicating whether each pixel in an ImageData object is the same as a given color
+        function createSameColorArray(imageData, color) {
+            // Create an empty 2D array
+            const array = [];
+            for (let y = 0; y < imageData.height; y++) {
+                array.push(new Array(imageData.width));
+            }
+
+            // Loop through the pixels in the image and set the corresponding element in the array to true if the pixel has the same color
+            const data = imageData.data;
+            for (let y = 0; y < imageData.height; y++) {
+                for (let x = 0; x < imageData.width; x++) {
+                    const index = (y * imageData.width + x) * 4;
+                    array[y][x] =
+                        data[index] === color.r && data[index + 1] === color.g && data[index + 2] === color.b;
+                }
+            }
+
+            return array;
+        }
+
+
+    </script>
+
+    <script>
+        range = {
+            from: 0,
+            to: 15,
+
+            *[Symbol.iterator]() { // a shorthand for [Symbol.iterator]: function*()
+                for (let value = this.from; value <= this.to; value++) {
+                    yield value;
+                }
+            }
+        };
+    </script>
+</body>
+</html>
