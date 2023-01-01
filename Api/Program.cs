@@ -38,8 +38,8 @@ app.MapGet("prepare/{uri}", (Uri? imageUrl) =>
 .WithOpenApi();
 
 
-string splitterHtml = File.ReadAllText(@"wwwroot\splitter.html");
-string ViewerHtml = File.ReadAllText(@"wwwroot\viewer.html");
+string splitterHtml = File.ReadAllText(@"wwwroot/splitter.html");
+string ViewerHtml = File.ReadAllText(@"wwwroot/viewer.html");
 
 app.MapGet("", () => Results.Content(splitterHtml, "text/html"));
 app.MapGet("viewer", () => Results.Content(ViewerHtml, "text/html"));
