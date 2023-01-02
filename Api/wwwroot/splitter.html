@@ -18,12 +18,10 @@
     </style>
 </head>
 <body>
-    <form id="form">
-        <label for="url">Image URL:</label>
-        <input type="text" id="url" name="url">
-        <br>
-        <button type="button" id="button">Get Sprites</button>
-    </form>
+    <label for="url">Image URL:</label>
+    <input type="text" id="url" name="url">
+    <br>
+    <button type="button" id="button">Get Sprites</button>
 
     <!-- HTML element to drag a file onto -->
     <div id="dropzone">Drop a file here</div>
@@ -62,7 +60,7 @@
         const getImage = async (url) => {
             try {
                 // Send a GET request to the image URL using the fetch() function
-                const response = await fetch(url);
+                const response = await fetch(url.value);
 
                 // Check the response status
                 if (response.ok) {
@@ -90,7 +88,6 @@
             // Example usage: download an image from a URL, draw it on a canvas, and add the canvas to the document body
             getImage(url).then(image => {
 
-                debugger;
                 // Set the canvas width to 200 pixels and the height to maintain the image's aspect ratio
                 canvas.width = 200;
                 canvas.height = Math.round((image.height / image.width) * 200);
