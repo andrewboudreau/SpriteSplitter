@@ -70,6 +70,7 @@
 
                     // Create an Image object from the blob
                     const image = new Image();
+                    image.crossOrigin = "Anonymous";
                     image.src = URL.createObjectURL(imageBlob);
 
                     // Return the Image object
