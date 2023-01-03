@@ -39,10 +39,12 @@ app.MapGet("prepare/{uri}", (Uri? imageUrl) =>
 
 
 string splitterHtml = File.ReadAllText(@"wwwroot/splitter.html");
-string ViewerHtml = File.ReadAllText(@"wwwroot/viewer.html");
+string viewerHtml = File.ReadAllText(@"wwwroot/viewer.html");
+string indexHtml = File.ReadAllText(@"wwwroot/index.html");
 
-app.MapGet("", () => Results.Content(splitterHtml, "text/html"));
-app.MapGet("viewer", () => Results.Content(ViewerHtml, "text/html"));
+app.MapGet("", () => Results.Content(indexHtml, "text/html"));
+app.MapGet("splitter", () => Results.Content(splitterHtml, "text/html"));
+app.MapGet("viewer", () => Results.Content(viewerHtml, "text/html"));
 
 app.Run();
 
