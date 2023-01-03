@@ -15,9 +15,21 @@
             padding: 20px;
             margin: 20px;
         }
+
+        #imagecache {
+            position:absolute;
+            left: 50%;
+            width: 50%;
+            top: 50%;
+            border: 1px solid red;
+            opacity: .5;
+            overflow-y:scroll;
+            overflow-x:clip;
+        }
     </style>
 </head>
 <body>
+
     <label for="url">Image URL:</label>
     <input type="text" id="url" name="url">
     <br>
@@ -25,13 +37,24 @@
 
     <!-- HTML element to drag a file onto -->
     <div id="dropzone">Drop a file here</div>
-
+    <input type="text" value="https://cdn.discordapp.com/attachments/1058940055072284762/1059281630725939220/andrewb_a_prep_school_hacker_45586c77-0802-45eb-b0c3-c86ba14d31a3.png" />
     <pre id="result"></pre>
     <canvas id="canvas" style="position: relative; top: 0; left: 0;"></canvas>
-    <small>version 2</small>
+
+    <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank" onclick="this.style = 'display:none'">
+        <input type="hidden" name="cmd" value="_s-xclick">
+        <input type="hidden" name="hosted_button_id" value="RFNU7C6CL5M9C">
+        <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
+    </form>
+
+    <div id="imagecache"></div>
+    <small>version 3</small>
     <script>
         const canvas = document.getElementById("canvas");
-        
+        const ctx = canvas.getContext('2d');
+
+        const images = document.getElementById("imagecache");
+
         // JavaScript code to handle file drop
         const dropzone = document.getElementById('dropzone');
 
@@ -58,59 +81,62 @@
             }
         });
 
-        const getImage = async (url) => {
-            try {
-                // Send a GET request to the image URL using the fetch() function
-                const response = await fetch(url.value);
+        const createAndAppendImage = async (url) => {
+            // Create an Image object
+            const image = new Image();
 
-                // Check the response status
-                if (response.ok) {
-                    // Get the image data as a blob
-                    const imageBlob = await response.blob();
+            // Set the image source to the URL
+            image.src = url;
+            image.alt = "download for url";
 
-                    // Create an Image object from the blob
-                    const image = new Image();
-                    image.crossOrigin = "Anonymous";
-                    image.src = URL.createObjectURL(imageBlob);
+            // Return a promise that resolves when the image's load event completes
+            return new Promise((resolve, reject) => {
+                const onLoad = () => {
+                    image.removeEventListener('load', onLoad);
+                    image.removeEventListener('error', onError);
+                    resolve(image);
+                };
+                const onError = () => {
+                    image.removeEventListener('load', onLoad);
+                    image.removeEventListener('error', onError);
+                    reject(new Error(`Failed to load image: ${url}`));
+                };
+                image.addEventListener('load', onLoad);
+                image.addEventListener('error', onError);
 
-                    // Return the Image object
-                    return image;
-                } else {
-                    // Throw an error if the request failed
-                    throw new Error(`Failed to download image: ${response.status} ${response.statusText}`);
-                }
-            } catch (error) {
-                console.error(error);
-            }
-        }        
-        
+                // Append the image to the DOM
+                images.appendChild(image);
+            });
+        }
+
+
         // JavaScript code to handle button click and perform image processing
         document.getElementById('button').addEventListener('click', function () {
 
             // Example usage: download an image from a URL, draw it on a canvas, and add the canvas to the document body
-            getImage(url).then(image => {
+            createAndAppendImage(url.value).then(image => {
 
-                // Set the canvas width to 200 pixels and the height to maintain the image's aspect ratio
-                canvas.width = 200;
-                canvas.height = Math.round((image.height / image.width) * 200);
+                // Set the canvas width to 400 pixels and the height to maintain the image's aspect ratio
+                canvas.width = 400;
+                canvas.height = Math.round((image.height / image.width) * canvas.width);
 
-                // Get the canvas context
-                const ctx = canvas.getContext('2d');
+                createImageBitmap(image).then(bmp => {
 
-                // Draw the image on the canvas
-                ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+                    // Draw the image on the canvas
+                    ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
 
-                // Get the pixel data from the canvas
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    // Get the pixel data from the canvas
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-                // Find the color at the specified location (x=3, y=3)
-                const color = getColorAt(imageData, 3, 3);
+                    // Find the color at the specified location (x=3, y=3)
+                    const color = getColorAt(imageData, 3, 3);
 
-                // Create a 2D boolean array indicating whether each pixel in the image is the same as the color at (x=3, y=3)
-                const sameColorArray = createSameColorArray(imageData, color);
+                    // Create a 2D boolean array indicating whether each pixel in the image is the same as the color at (x=3, y=3)
+                    const sameColorArray = createSameColorArray(imageData, color);
 
-                // Display the resulting array
-                document.getElementById('result').textContent = sameColorArray.map(row => row.join(' ')).join('\n');
+                    // Display the resulting array
+                    document.getElementById('result').textContent = sameColorArray.length;
+                });
             });
         });
 
@@ -164,4 +190,5 @@
         };
     </script>
 </body>
+
 </html>

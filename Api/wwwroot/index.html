@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>spAceInvaders</title>
+    <style>
+        #canvas {
+            border: 1px solid black;
+            background: #000;
+            z-index: -1;
+        }
+
+        #header {
+            position: relative;
+            background-color: rgb(190, 190,190);
+            height: 250px;
+            width: 45%;
+            padding: 1em 2em .5em 2em;
+            margin: auto auto;
+            margin-top: 91px;
+            text-align: center;
+            font-family: Courier New, Courier, monospace;
+            font-size: 1.5rem;
+            border-radius: 7px 7px;
+            min-width: 358px;
+        }
+
+        #content {
+            position: relative;
+            min-width: 358px;
+        }
+
+        #prompt {
+            margin: 8px 10px 10px 10px;
+            padding: 10px;
+            font-family: 'Cascadia Mono', monospace;
+            width: 93%;
+            height: 150px;
+            width: 73%;
+        }
+
+        .bmc-btn-container {
+            position: fixed;
+            top: 10px;
+            left: 20px;
+            opacity: .75;
+        }
+
+        #donate {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            opacity: .75;
+            display: none;
+        }
+
+        #prepare {
+            font-family:'Lucida Sans';
+            font-size:20px;
+            padding:10px 18px 10px 18px;
+            display:block;
+            
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas" style="position: fixed; top: 0; left: 0;"></canvas>
+    <div id="header">
+        <h2>An AI variant to space invaders </h2>
+        <small>you prompt the art</small>
+        <div id="content">
+            <textarea id="prompt"></textarea>
+            <script>document.getElementById("prompt").focus();</script>
+            <button id="prepare" onclick="prepare()" disabled>Prepare</button>
+        </div>
+    </div>
+    <form id="donate" action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank" onclick="this.style = 'display:none'">
+        <input type="hidden" name="cmd" value="_s-xclick">
+        <input type="hidden" name="hosted_button_id" value="RFNU7C6CL5M9C">
+        <input type="image" width="120" src="images/paypal.png" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
+    </form>
+    <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="andrewboudreau" data-color="#FFDD00" data-emoji="" data-font="Poppins" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#ffffff"></script>
+    <script>
+        const canvas = document.getElementById("canvas");
+
+        window.addEventListener("resize", () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Get the canvas context
+        const ctx = canvas.getContext("2d");
+
+        // Create an array to store the stars
+        const stars = [];
+
+        // Create a random number of stars
+        for (let i = 0; i < 100; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: Math.random() * 2 + 1,
+                alpha: Math.random(),
+            });
+        }
+
+        // Main loop
+        function loop() {
+
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw the stars
+            for (const star of stars) {
+                star.x += 2 * 1 / star.alpha + 1;
+
+                // If the star goes off the bottom of the screen, wrap it around to the top
+                if (star.x > canvas.width) {
+                    star.x = 0;
+                    star.y = Math.random() * canvas.height;
+                    star.radius = Math.random() * 2 + 1;
+                    star.alpha = Math.random();
+                }
+
+                // Draw the star
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                ctx.closePath();
+                ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
+                ctx.fill();
+            }
+
+            // Request the next frame
+            requestAnimationFrame(loop);
+        }
+
+        // Start the main loop
+        loop();
+
+    </script>
+</body>
+</html>
