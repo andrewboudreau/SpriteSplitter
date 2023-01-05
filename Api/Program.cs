@@ -37,15 +37,22 @@ app.MapGet("prepare/{uri}", (Uri? imageUrl) =>
 .WithName("GetWeatherForecast")
 .WithOpenApi();
 
-
 string splitterHtml = File.ReadAllText(@"wwwroot/splitter.html");
 string viewerHtml = File.ReadAllText(@"wwwroot/viewer.html");
 string indexHtml = File.ReadAllText(@"wwwroot/index.html");
 
-app.MapGet("", () => Results.Content(indexHtml, "text/html"));
-app.MapGet("splitter", () => Results.Content(splitterHtml, "text/html"));
-app.MapGet("viewer", () => Results.Content(viewerHtml, "text/html"));
+app.MapGet("", () => Results.Content(indexHtml, "text/html")).WithName("Welcome UI").WithOpenApi();
+app.MapGet("splitter", () => Results.Content(splitterHtml, "text/html")).WithName("Splitter UI").WithOpenApi(); 
+app.MapGet("viewer", () => Results.Content(viewerHtml, "text/html")).WithName("Viewer UI").WithOpenApi();
 
+app.MapGet("ship/next", () => Results.Json(new 
+{ 
+    ImageUrl = "sprites/sprite-1.png",
+    Rotate = 180,
+    Scale = 0.25f
+})).WithName("Next Ship").WithOpenApi();
+
+app.UseStaticFiles();
 app.Run();
 
 internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)

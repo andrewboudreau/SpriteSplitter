@@ -5,10 +5,17 @@
     <meta charset="utf-8" />
     <title>spAceInvaders</title>
     <style>
+        body {
+            background: #000;
+        }
+
         #canvas {
             border: 1px solid black;
             background: #000;
             z-index: -1;
+            position: fixed;
+            top: 0;
+            left: 0;
         }
 
         #header {
@@ -56,83 +63,61 @@
         }
 
         #prepare {
-            font-family:'Lucida Sans';
-            font-size:20px;
-            padding:10px 18px 10px 18px;
-            display:block;
-            
+            font-family: 'Lucida Sans';
+            font-size: 20px;
+            padding: 10px 18px 10px 18px;
+            display: block;
         }
     </style>
 </head>
 <body>
-    <canvas id="canvas" style="position: fixed; top: 0; left: 0;"></canvas>
+    <canvas id="canvas"></canvas>
     <div id="header">
         <h2>An AI variant to space invaders </h2>
         <small>you prompt the art</small>
         <div id="content">
             <textarea id="prompt"></textarea>
-            <script>document.getElementById("prompt").focus();</script>
+            <script>document.getElementById("prompt").focus()</script>
             <button id="prepare" onclick="prepare()" disabled>Prepare</button>
         </div>
     </div>
-    <form id="donate" action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank" onclick="this.style = 'display:none'">
-        <input type="hidden" name="cmd" value="_s-xclick">
-        <input type="hidden" name="hosted_button_id" value="RFNU7C6CL5M9C">
-        <input type="image" width="120" src="images/paypal.png" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
-    </form>
-    <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="andrewboudreau" data-color="#FFDD00" data-emoji="" data-font="Poppins" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#ffffff"></script>
+    <script src="js/CanvasResizeHandler.js"></script>
+    <script src="js/SpriteManager.js"></script>
+    <script src="js/StarField.js"></script>
+
     <script>
         const canvas = document.getElementById("canvas");
-
-        window.addEventListener("resize", () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        });
-
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
+
+        CanvasResizeHandler(canvas);
+
+        const starField = StarField(canvas);
+        const spriteManager = SpriteManager(canvas);
+
+        var result = fetch("/ship/next")
+            .then(response => response.json())
+            .then(sprite => {
+                sprite.velocity = { x: 1, y: 1 }; //random2d(-2, 2, -2, 2);
+                console.log(sprite.velocity);
+                spriteManager.addSprite(sprite);
+            });
 
         // Get the canvas context
         const ctx = canvas.getContext("2d");
 
-        // Create an array to store the stars
-        const stars = [];
-
-        // Create a random number of stars
-        for (let i = 0; i < 100; i++) {
-            stars.push({
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
-                radius: Math.random() * 2 + 1,
-                alpha: Math.random(),
-            });
-        }
-
-        // Main loop
+        // Main loop 
         function loop() {
-
             // Clear the canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw the stars
-            for (const star of stars) {
-                star.x += 2 * 1 / star.alpha + 1;
+            // Update the StarField and SpriteManager
+            starField.update();
+            spriteManager.update();
 
-                // If the star goes off the bottom of the screen, wrap it around to the top
-                if (star.x > canvas.width) {
-                    star.x = 0;
-                    star.y = Math.random() * canvas.height;
-                    star.radius = Math.random() * 2 + 1;
-                    star.alpha = Math.random();
-                }
-
-                // Draw the star
-                ctx.beginPath();
-                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-                ctx.closePath();
-                ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
-                ctx.fill();
-            }
+            // Draw the StarField and SpriteManager on the canvas
+            starField.draw(ctx);
+            spriteManager.draw(ctx);
 
             // Request the next frame
             requestAnimationFrame(loop);
@@ -142,5 +127,6 @@
         loop();
 
     </script>
+    <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="andrewboudreau" data-color="#FFDD00" data-emoji="" data-font="Poppins" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#ffffff"></script>
 </body>
 </html>
