@@ -2,15 +2,51 @@ const SpriteManager = canvas => {
     const sprites = [];
     let spriteCount = 0;
 
+    const cornerCoords = [
+        [-1, -1],
+        [1, -1],
+        [1, 1],
+        [-1, 1],
+    ];
+    
+    const getBoundingBox = (centerX, centerY, width, height, angle) => {
+        let minX = Infinity, minY = Infinity,
+            maxX = -Infinity, maxY = -Infinity;
+
+        for (const coord of cornerCoords) {
+            // Rotate the point counterclockwise about the origin
+            const rotX = coord[0] * width * Math.cos(angle) - coord[1] * height * Math.sin(angle);
+            const rotY = coord[0] * width * Math.sin(angle) + coord[1] * height * Math.cos(angle);
+
+            // Translate the point back to its original position
+            const newX = rotX + centerX;
+            const newY = rotY + centerY;
+
+            minX = Math.min(minX, newX);
+            minY = Math.min(minY, newY);
+            maxX = Math.max(maxX, newX);
+            maxY = Math.max(maxY, newY);
+        }
+
+        return {
+            x: minX,
+            y: minY,
+            width: maxX - minX,
+            height: maxY - minY
+        };
+    }
+    
     // Create a Sprite class
     class Sprite {
         constructor(imageUrl, rotate, scale, position, velocity) {
             this.imageUrl = imageUrl;
             this.rotate = (rotate * Math.PI) / 180;
+            this.forward = this.rotate;
             this.scale = scale;
             this.position = position;
             this.velocity = velocity;
-            this.facing = 0;
+            this.center = null;
+            this.boundingBox = null;
             this.debug = true;
             this.image = null;
             this.loaded = false;
@@ -22,9 +58,19 @@ const SpriteManager = canvas => {
                 this.image = new Image();
                 this.image.src = this.imageUrl;
                 this.image.addEventListener('load', () => {
+                    this.size = {
+                        x: this.image.width * this.scale,
+                        y: this.image.height * this.scale
+                    };
+
+                    this.half = {
+                        x: this.size.x / 2.0,
+                        y: this.size.y / 2.0
+                    };
+
+                    this.update();
+
                     this.loaded = true;
-                    this.size = { x: this.image.width * this.scale, y: this.image.height * this.scale };
-                    console.log("loaded " + this.image.src);
                     resolve();
                 });
                 this.image.addEventListener('error', () => {
@@ -39,7 +85,10 @@ const SpriteManager = canvas => {
             this.position.y += this.velocity.y;
 
             // Calculate the facing direction based on the velocity
-            this.facing = this.rotate + Math.atan2(this.velocity.y, this.velocity.x);
+            this.forward = this.rotate + Math.atan2(this.velocity.y, this.velocity.x);
+
+            // Calculate the bounding box based on the size, scale, and rotation of the sprite
+            this.boundingBox = getBoundingBox(this.position.x, this.position.y, this.half.x, this.half.y, this.forward);
         }
 
         // Draw the sprite on a canvas
@@ -51,10 +100,15 @@ const SpriteManager = canvas => {
                 // Translate the context to the sprite's position
                 ctx.translate(this.position.x, this.position.y);
 
+                // Save the current context state
+                ctx.save();
 
                 // Rotate the context to the sprite's facing direction
-                ctx.rotate(this.facing);
+                ctx.rotate(this.forward);
                 ctx.scale(this.scale, this.scale);
+
+                // Draw the image on the canvas
+                ctx.drawImage(this.image, -this.image.width / 2, -this.image.height / 2);
 
                 if (this.debug) {
                     // Draw a border around the sprite
@@ -63,11 +117,8 @@ const SpriteManager = canvas => {
                     ctx.strokeRect(-this.image.width / 2, -this.image.height / 2, this.image.width, this.image.height);
                 }
 
-                // Draw the image on the canvas
-                ctx.drawImage(this.image, -this.image.width / 2, -this.image.height / 2);
-
-                ctx.rotate(-this.facing);
-                ctx.scale(1 / this.scale, 1 / this.scale);
+                // Restore the context state 
+                ctx.restore();
 
                 if (this.debug) {
                     // Render the coordinates over the top of the sprite
@@ -79,7 +130,69 @@ const SpriteManager = canvas => {
 
                 // Restore the context state
                 ctx.restore();
+
+                if (this.debug) {
+                    // Draw a circle at the center of the sprite
+                    ctx.beginPath();
+                    ctx.arc(this.position.x, this.position.y, 5, 0, Math.PI * 2);
+                    ctx.fillStyle = 'red';
+                    ctx.fill();
+                    ctx.closePath();
+
+                    // Draw a line to each corner of the bounding box
+                    ctx.beginPath();
+                    ctx.moveTo(this.position.x, this.position.y);
+                    ctx.lineTo(this.boundingBox.x, this.boundingBox.y);
+                    ctx.lineTo(this.boundingBox.x + this.boundingBox.width, this.boundingBox.y);
+                    ctx.lineTo(this.boundingBox.x + this.boundingBox.width, this.boundingBox.y + this.boundingBox.height);
+                    ctx.lineTo(this.boundingBox.x, this.boundingBox.y + this.boundingBox.height);
+                    ctx.lineTo(this.boundingBox.x, this.boundingBox.y);
+                    ctx.strokeStyle = 'green';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.closePath();
+
+                    // Print the x,y coordinates of each corner of the bounding box
+                    ctx.fillStyle = 'white';
+                    ctx.font = '14px Arial';
+
+                    ctx.fillText(`(${Math.round(this.boundingBox.x)}, ${Math.round(this.boundingBox.y)})`,
+                        this.boundingBox.x,
+                        this.boundingBox.y - 10);
+
+                    ctx.fillText(
+                        `(${Math.round(this.boundingBox.x + this.boundingBox.width)}, ${Math.round(this.boundingBox.y)})`,
+                        this.boundingBox.x + this.boundingBox.width,
+                        this.boundingBox.y - 10);
+
+                    ctx.fillText(
+                        `(${Math.round(this.boundingBox.x + this.boundingBox.width)}, ${Math.round(this.boundingBox.y + this.boundingBox.height)})`,
+                        this.boundingBox.x + this.boundingBox.width,
+                        this.boundingBox.y + this.boundingBox.height);
+
+                    ctx.fillText(
+                        `(${Math.round(this.boundingBox.x)}, ${Math.round(this.boundingBox.y + this.boundingBox.height)})`,
+                        this.boundingBox.x,
+                        this.boundingBox.y + this.boundingBox.height);
+                }
+
             }
+        }
+
+        isPointInBoundingBox(pointX, pointY) {
+
+            // Rotate the point counterclockwise about the bounding box center
+            const rotX = (pointX - this.position.x) * Math.cos(this.forward) - (pointY - this.position.y) * Math.sin(this.forward);
+            const rotY = (pointX - this.position.x) * Math.sin(this.forward) + (pointY - this.position.y) * Math.cos(this.forward);
+
+            // Translate the point back to its original position
+            const newX = rotX + this.position.x;
+            const newY = rotY + this.position.y;
+
+            var hit = (newX >= (this.position.x - this.half.x) && newX <= (this.position.x + this.half.x)) &&
+                (newY >= (this.position.y - this.half.y) && newY <= (this.position.y + this.half.y));
+
+            return hit;                
         }
     }
 
@@ -115,12 +228,11 @@ const SpriteManager = canvas => {
         sprites.forEach(sprite => {
             sprite.update();
 
-            if (sprite.position.x - sprite.size.x > canvas.width || sprite.position.x < 0 || sprite.position.y > canvas.height + sprite.size.y / 2 || sprite.position.y < 0) {
+            if (sprite.position.x - sprite.maxlength > canvas.width || sprite.position.x < 0 || sprite.position.y > canvas.height + sprite.size.y / 2 || sprite.position.y < 0) {
                 sprite.position.x = 1;
                 sprite.position.y = Math.random() * canvas.height;
 
-                sprite.velocity.x = Math.random() * 3;
-                sprite.velocity.y = Math.random() * 1;
+                sprite.velocity = random2d();
             }
 
             if (after) {
@@ -139,6 +251,14 @@ const SpriteManager = canvas => {
     // Get the number of sprites
     const count = () => spriteCount;
 
+    const random2d = (minX = -3, maxX = 5, minY = -3, maxY = 5) => {
+        const x = Math.random() * (maxX - minX) + minX;
+        const y = Math.random() * (maxY - minY) + minY;
+        return { x, y };
+    };
+
+    const items = () => sprites;
+
     // Return the public API
     return {
         addSprite,
@@ -146,7 +266,8 @@ const SpriteManager = canvas => {
         update,
         draw,
         count,
-        debug
+        debug,
+        items
     };
 };
 

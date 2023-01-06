@@ -1,12 +1,14 @@
 <!DOCTYPE html>
-
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="utf-8" />
-    <title>spAceInvaders</title>
+    <title>Space AI</title>
     <style>
         body {
             background: #000;
+            margin: 0;
+            padding: 0;
+            font-family: Courier New, Courier, monospace;
         }
 
         #canvas {
@@ -18,25 +20,31 @@
             left: 0;
         }
 
-        #header {
-            position: relative;
+        .hero {
+            display: flex;
+            align-items: center;
+            align-items: flex-start; /* this will move the text to the top of the hero element */
+            justify-content: center;
             background-color: rgb(190, 190,190);
-            height: 250px;
-            width: 45%;
-            padding: 1em 2em .5em 2em;
-            margin: auto auto;
-            margin-top: 91px;
-            text-align: center;
-            font-family: Courier New, Courier, monospace;
-            font-size: 1.5rem;
-            border-radius: 7px 7px;
-            min-width: 358px;
+            border-radius: 7px;
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            width: 60%;
+            height: 20%;
+            transform: translate(-50%, -50%);
         }
 
-        #content {
-            position: relative;
-            min-width: 358px;
-        }
+            .hero h1 {
+
+                display: flex;
+            }
+
+            .hero #content {
+                display:flex;
+                background-color: rgb(190, 190,190);
+                min-width: 358px;
+            }
 
         #prompt {
             margin: 8px 10px 10px 10px;
@@ -47,36 +55,27 @@
             width: 73%;
         }
 
-        .bmc-btn-container {
-            position: fixed;
-            top: 10px;
-            left: 20px;
-            opacity: .75;
-        }
-
-        #donate {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            opacity: .75;
-            display: none;
-        }
-
         #prepare {
             font-family: 'Lucida Sans';
             font-size: 20px;
             padding: 10px 18px 10px 18px;
             display: block;
         }
+
+        .bmc-btn-container {
+            position: fixed;
+            top: 10px;
+            left: 20px;
+            opacity: .75;
+        }
     </style>
 </head>
 <body>
     <canvas id="canvas"></canvas>
-    <div id="header">
-        <h2>An AI variant to space invaders </h2>
-        <small>you prompt the art</small>
+    <div class="hero">
+        <h1>An AI variant of a space game</h1>
         <div id="content">
-            <textarea id="prompt"></textarea>
+            <textarea id="prompt" title="prompt"></textarea>
             <script>document.getElementById("prompt").focus()</script>
             <button id="prepare" onclick="window.pause = !window.pause">Prepare</button>
         </div>
@@ -135,7 +134,6 @@
             ctx.fillStyle = "#000000";
             ctx.fillRect(mouse.x, mouse.y, 4, 4);
 
-            //console.log(`Mouse position: (${mouse.x}, ${mouse.x})`);
             // Request the next frame
             requestAnimationFrame(loop);
         }
