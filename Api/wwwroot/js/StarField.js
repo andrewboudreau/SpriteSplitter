@@ -1,6 +1,8 @@
 ﻿const StarField = canvas => {
     // Create an array to store the stars
     const stars = [];
+    let lines = [];
+    let target = { x: 500, y: 500 };
 
     // Create a random number of stars
     for (let i = 0; i < 100; i++) {
@@ -12,9 +14,11 @@
             color: '#fff',
         });
     }
-    
+
     // Update the stars
     const update = (after) => {
+        lines = [];
+
         for (const star of stars) {
             star.x += 2 * 0.1 / star.alpha + 1;
 
@@ -30,6 +34,9 @@
             if (after) {
                 after(star, canvas, stars);
             }
+
+            star.distanceToTarget = Math.sqrt((target.x - star.x) ** 2 + (target.y - star.y) ** 2);
+            insertIfNearest(lines, star);
         }
     };
 
@@ -43,12 +50,59 @@
             ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
             ctx.fill();
         }
+
+        for (let i = 0; i < lines.length; i++) {
+            drawLine(ctx, lines[i], target);
+        }
     };
+
+    const setTarget = t => target = t;
+
+    const drawLine = (ctx, star, end) => {
+        // Set the starting and ending points of the line
+        const x1 = star.x;
+        const y1 = star.y;
+        const x2 = end.x;
+        const y2 = end.y;
+
+        // Draw the line
+        ctx.beginPath();
+            ctx.strokeStyle = `rgba(255, 255, 255, ${100/star.distanceToTarget})`;
+            ctx.lineWidth = Math.min(3, 300 / star.distanceToTarget);
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+        ctx.closePath();
+    };
+
+    function insertIfNearest(array, star) {
+        const limit = 8;
+
+        // Ignore the value if it's larger than the largest value in the array and we already have 5 (limit) items
+        if (array.length === limit && star.distanceToTarget > array[limit - 1].distanceToTarget) {
+            return;
+        }
+
+        // Find the insertion point for the new value
+        let i = 0;
+        while (i < array.length && array[i].distanceToTarget < star.distanceToTarget) {
+            i++;
+        }
+
+        // Insert the new value at the insertion point, or at the end of the array if we have less than 'trackers'' items
+        if (array.length < limit) {
+            array.splice(i, 0, star);
+        } else {
+            array.splice(i, 0, star);
+            array.pop(); // Remove the largest value from the array
+        }
+    }
 
     // Return the public API
     return {
         update,
-        draw
+        draw,
+        setTarget
     };
 };
 
