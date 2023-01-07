@@ -73,6 +73,34 @@
             right: 1rem;
         }
 
+        .gameover {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: fixed;
+            left: 50%;
+            bottom: -100%; /* Position the div off the bottom of the screen */
+            transform: translate(-50%, 0); /* Center the div horizontally */
+            width: 200px;
+            height: 100px;
+            background-color: darkred;
+            color: mistyrose;
+            text-align: center;
+            transition: bottom .25s ease-in-out; /* Add a transition for the bottom property */
+            font-family: 'Lucida Sans';
+            font-size: 30px;
+            padding: 20px;
+            border-radius: 4px 4px 0px 0px;
+        }
+
+            .gameover.open {
+                bottom: 0; /* Position the div at the bottom of the screen */
+            }
+
+            .gameover.closed {
+                bottom: -100%; /* Position the div off the bottom of the screen */
+            }
+
         .bmc-btn-container {
             position: fixed;
             top: 10px;
@@ -90,7 +118,10 @@
         <button type="button" id="prepare" onclick="game.pause()">pause</button>
         <script>document.getElementById("prompt").focus()</script>
     </div>
-
+    <div class="gameover">
+        YOU DIED
+        <small id="score">0</small>
+    </div>
     <script src="js/CanvasResizeHandler.js"></script>
     <script src="js/CanvasMouseMoveHandler.js"></script>
 
@@ -107,7 +138,23 @@
             });
     </script>
     <script>
+        const gameover = document.querySelector('.gameover');
+
+        function openDiv() {
+            gameover.classList.add('open');
+            gameover.classList.remove('closed');
+        }
+
+        function closeDiv() {
+            gameover.classList.add('closed');
+            gameover.classList.remove('open');
+        }
+
+        let frames = 0;
+        let maxScore = 0;
+
         const canvas = document.getElementById("canvas");
+        const score = document.getElementById("score");
 
         CanvasResizeHandler(canvas);
         const mouse = CanvasMouseMoveHandler(canvas);
@@ -128,6 +175,19 @@
                 starField.draw(ctx);
                 spriteManager.draw(ctx);
                 mouse.draw(ctx);
+
+                if (starField.lines().length === 0 && frames >= 90) {
+                    setTimeout(closeDiv, 2000); // Close the div after 2 seconds
+                    openDiv(); // Open the div immediately
+
+                    if (frames > maxScore) {
+                        maxScore = frames;
+                        score.innerText = maxScore;
+                        console.log(`new max score of ${maxScore}`);
+                    }
+                    frames = 0;
+                }
+                frames++;
             }
         });
 

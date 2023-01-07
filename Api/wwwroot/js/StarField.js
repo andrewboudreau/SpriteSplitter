@@ -79,9 +79,10 @@
 
     function insertIfNearest(array, star) {
         const limit = 4;
+        const maxLength = 100;
 
         // Ignore the value if it's larger than the largest value in the array and we already have 5 (limit) items
-        if (array.length === limit && star.distanceToTarget > array[limit - 1].distanceToTarget) {
+        if (star.distanceToTarget > maxLength || (array.length === limit && star.distanceToTarget > array[limit - 1].distanceToTarget)) {
             return;
         }
 
@@ -104,7 +105,8 @@
     return {
         update,
         draw,
-        setTarget
+        setTarget,
+        lines: () => lines
     };
 };
 
@@ -112,4 +114,34 @@ const random2d = (minX = -256, maxX = 256, minY = -256, maxY = 256) => {
     const x = Math.random() * (maxX - minX) + minX;
     const y = Math.random() * (maxY - minY) + minY;
     return { x, y };
+};
+
+const Connections = (canvas, stars) => {
+    const limit = 4;
+    const connections = [];
+
+
+    function Update(array, star) {
+        const limit = 4;
+        const maxLength = 70;
+
+        // Ignore the value if it's larger than the largest value in the array and we already have 5 (limit) items
+        if (star.distanceToTarget > 100 || (array.length === limit && star.distanceToTarget > array[limit - 1].distanceToTarget)) {
+            return;
+        }
+
+        // Find the insertion point for the new value
+        let i = 0;
+        while (i < array.length && array[i].distanceToTarget < star.distanceToTarget) {
+            i++;
+        }
+
+        // Insert the new value at the insertion point, or at the end of the array if we have less than 'trackers'' items
+        if (array.length < limit) {
+            array.splice(i, 0, star);
+        } else {
+            array.splice(i, 0, star);
+            array.pop(); // Remove the largest value from the array
+        }
+    }
 };
