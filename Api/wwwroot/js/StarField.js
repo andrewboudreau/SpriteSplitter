@@ -16,7 +16,7 @@
     // Update the stars
     const update = (after) => {
         for (const star of stars) {
-            star.x += 2 * 1 / star.alpha + 1;
+            star.x += 2 * 0.1 / star.alpha + 1;
 
             // If the star goes off the bottom of the screen, wrap it around to the top
             // and give it a new random color

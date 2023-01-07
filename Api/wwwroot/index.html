@@ -29,7 +29,7 @@
             background-color: rgb(190, 190,190);
             border-radius: 7px;
             position: fixed;
-            top: 12rem;
+            top: 13rem;
             left: 50%;
             width: 60%;
             height: 20%;
@@ -68,7 +68,8 @@
             font-size: 20px;
             padding: 10px 18px 10px 18px;
             position: absolute;
-            top: 16rem;
+            top: 14rem;
+            right: 1rem;
         }
 
         .bmc-btn-container {
@@ -85,7 +86,7 @@
         <h1>An AI variant of a space game</h1>
         <small>you prompt the art</small>
         <textarea id="prompt" title="prompt"></textarea>
-        <button type="button" id="prepare" onclick="window.pause = !window.pause">Prepare</button>
+        <button type="button" id="prepare" onclick="game.pause()">pause</button>
         <script>document.getElementById("prompt").focus()</script>
     </div>
 
@@ -94,36 +95,29 @@
 
     <script src="js/SpriteManager.js"></script>
     <script src="js/StarField.js"></script>
+    <script src="js/GameEngine.js"></script>
 
     <script>
-        const canvas = document.getElementById("canvas");
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        CanvasResizeHandler(canvas);
-        const mouse = CanvasMouseMoveHandler(canvas);
-
-        const starField = StarField(canvas);
-        const spriteManager = SpriteManager(canvas);
-
         var result = fetch("/ship/next")
             .then(response => response.json())
             .then(sprite => {
                 sprite.velocity = { x: 1, y: 1 };
                 spriteManager.addSprite(sprite);
             });
+    </script>
+    <script>
+        const canvas = document.getElementById("canvas");
 
-        // Get the canvas context
-        const ctx = canvas.getContext("2d");
-        window.pause = false;
+        CanvasResizeHandler(canvas);
+        const mouse = CanvasMouseMoveHandler(canvas);
+
+        const game = GameEngine(canvas);
+        const starField = StarField(canvas);
+        const spriteManager = SpriteManager(canvas);
 
         // Main loop
-        function loop() {
-            if (!window.pause) {
-
-                // Clear the canvas
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+        game.loop((ctx, paused) => {
+            if (!paused) {
                 // Update the StarField and SpriteManager
                 spriteManager.update();
                 starField.update();
@@ -133,14 +127,7 @@
                 spriteManager.draw(ctx);
                 mouse.draw(ctx);
             }
-
-
-            // Request the next frame
-            requestAnimationFrame(loop);
-        }
-
-        // Start the main loop
-        loop();
+        });
 
     </script>
     <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="andrewboudreau" data-color="#FFDD00" data-emoji="" data-font="Poppins" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#ffffff"></script>
