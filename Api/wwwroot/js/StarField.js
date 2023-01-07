@@ -1,11 +1,13 @@
 ﻿const StarField = canvas => {
+    const numberOfStars = 70;
+
     // Create an array to store the stars
     const stars = [];
     let lines = [];
     let target = { x: 500, y: 500 };
 
     // Create a random number of stars
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < numberOfStars; i++) {
         stars.push({
             x: Math.random() * canvas.width,
             y: Math.random() * canvas.height,
@@ -42,12 +44,12 @@
 
     // Draw the stars on a canvas
     const draw = ctx => {
-        for (const star of stars) {
+        for (let i = 0; i < stars.length; i++) {
             // Draw the star
             ctx.beginPath();
-            ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+            ctx.arc(stars[i].x, stars[i].y, stars[i].radius, 0, Math.PI * 2);
             ctx.closePath();
-            ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
+            ctx.fillStyle = `rgba(255, 255, 255, ${stars[i].alpha})`;
             ctx.fill();
         }
 
@@ -58,12 +60,12 @@
 
     const setTarget = t => target = t;
 
-    const drawLine = (ctx, star, end) => {
+    const drawLine = (ctx, star, target) => {
         // Set the starting and ending points of the line
         const x1 = star.x;
         const y1 = star.y;
-        const x2 = end.x;
-        const y2 = end.y;
+        const x2 = target.x;
+        const y2 = target.y;
 
         // Draw the line
         ctx.beginPath();
@@ -76,7 +78,7 @@
     };
 
     function insertIfNearest(array, star) {
-        const limit = 8;
+        const limit = 4;
 
         // Ignore the value if it's larger than the largest value in the array and we already have 5 (limit) items
         if (array.length === limit && star.distanceToTarget > array[limit - 1].distanceToTarget) {
