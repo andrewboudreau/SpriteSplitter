@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>Space AI</title>
+    <style>
+        body {
+            background: #000;
+            margin: 0;
+            padding: 0;
+            font-family: Courier New, Courier, monospace;
+        }
+
+        #canvas {
+            border: 1px solid black;
+            background: #000;
+            z-index: -1;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+        .hero-box {
+            width: 50%;
+            max-width: 500px;
+            background-color: rgb(190, 190,190);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px;
+        }
+
+        .hero-title {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 5px;
+        }
+
+        .hero-textarea {
+            width: 100%;
+            height: 200px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            resize: none;
+            padding: 10px;
+            font-size: 16px;
+            font-family: 'Cascadia Mono', monospace;
+        }
+
+        .hero-button {
+            font-family: 'Lucida Sans';
+            font-size: 20px;
+            background-color: #4caf50;
+            border: none;
+            color: black;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        #prepare {
+            font-family: 'Lucida Sans';
+            font-size: 20px;
+            padding: 10px 18px 10px 18px;
+            position: absolute;
+            top: 14rem;
+            right: 1rem;
+        }
+
+        .bmc-btn-container {
+            position: fixed;
+            top: 10px;
+            left: 20px;
+            opacity: .75;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div class="hero-box">
+        <h1 class="hero-title">An AI variant of a space game</h1>
+        <small>you prompt the art</small>
+        <textarea class="hero-textarea" title="prompt" id="prompt"></textarea>
+        <button class="hero-button">Pause</button>
+        <script>document.getElementById("prompt").focus()</script>
+    </div>
+
+    <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="andrewboudreau" data-color="#FFDD00" data-emoji="" data-font="Poppins" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#ffffff"></script>
+</body>
+</html>
