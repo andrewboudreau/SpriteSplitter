@@ -86,11 +86,13 @@
             background-color: darkred;
             color: mistyrose;
             text-align: center;
-            transition: bottom .25s ease-in-out; /* Add a transition for the bottom property */
+            transition: bottom 1s ease-in-out; /* Add a transition for the bottom property */
             font-family: 'Lucida Sans';
             font-size: 30px;
             padding: 20px;
             border-radius: 4px 4px 0px 0px;
+            border: 5px solid mistyrose;
+            border-bottom: 0;
         }
 
             .gameover.open {
@@ -101,9 +103,27 @@
                 bottom: -100%; /* Position the div off the bottom of the screen */
             }
 
+        .fade-in {
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+            .fade-in.show {
+                opacity: 1;
+            }
+
+        .fade-out {
+            opacity: 1;
+            transition: opacity 1s ease-in-out;
+        }
+
+            .fade-out.hide {
+                opacity: 0;
+            }
+
         .bmc-btn-container {
             position: fixed;
-            top: 10px;
+            bottom: 10px;
             left: 20px;
             opacity: .75;
         }
@@ -111,7 +131,7 @@
 </head>
 <body>
     <canvas id="canvas"></canvas>
-    <div id="hero">
+    <div id="hero" class="fade-out">
         <h1>An AI variant of a space game</h1>
         <small>you prompt the art</small>
         <textarea id="prompt" title="prompt"></textarea>
@@ -138,24 +158,60 @@
             });
     </script>
     <script>
-        const gameover = document.querySelector('.gameover');
 
-        function openDiv() {
+        let timeout = null;
+        let hideTimeout = null;
+        function showGameOver() {
             gameover.classList.add('open');
             gameover.classList.remove('closed');
         }
 
-        function closeDiv() {
+        function hideGameOver() {
             gameover.classList.add('closed');
             gameover.classList.remove('open');
+            timeout = null;
+        }
+
+        function show(element) {
+            clearTimeout(hideTimeout);
+            hideTimeout = null;
+            element.style = "";
+            element.classList.add('show');
+            element.classList.remove('hide');
+        }
+
+        function hide(element) {
+            element.classList.add('hide');
+            element.classList.remove('show');
+            if (hideTimeout) {
+                clearTimeout(hideTimeout);
+            }
+            hideTimeout = setTimeout(() => element.style ="display:none;", 1000);
         }
 
         let frames = 0;
         let maxScore = 0;
 
         const canvas = document.getElementById("canvas");
+        const hero = document.getElementById("hero");
+        const prompt = document.getElementById("prompt");
+        const gameover = document.querySelector('.gameover');
         const score = document.getElementById("score");
 
+        prompt.addEventListener("blur", () => {
+            hide(hero);
+        });
+        prompt.addEventListener("focus", () => {
+            show(hero);
+        });
+
+        document.addEventListener("keydown", (e) => {
+            console.log(hero.style.display);
+            if (hero.style.display == "none" && (e.key === 'Escape' || e.key == 'Tab' || e.key == 'Enter' || e.key === ' ')) {
+                show(hero);
+                prompt.focus();
+            }
+        });
         CanvasResizeHandler(canvas);
         const mouse = CanvasMouseMoveHandler(canvas);
 
@@ -165,33 +221,36 @@
 
         // Main loop
         game.loop((ctx, paused) => {
-            if (!paused) {
-                // Update the StarField and SpriteManager
-                spriteManager.update();
-                starField.update();
-                starField.setTarget(mouse);
+            if (paused)
+                return;
 
-                // Draw the StarField and SpriteManager on the canvas
-                starField.draw(ctx);
-                spriteManager.draw(ctx);
-                mouse.draw(ctx);
+            // Update the StarField and SpriteManager
+            spriteManager.update();
+            starField.setTarget(mouse);
+            starField.update();
 
-                if (starField.lines().length === 0 && frames >= 90) {
-                    setTimeout(closeDiv, 2000); // Close the div after 2 seconds
-                    openDiv(); // Open the div immediately
+            // Draw the StarField and SpriteManager on the canvas
+            starField.draw(ctx);
+            spriteManager.draw(ctx);
+            mouse.draw(ctx, () => frames);
 
-                    if (frames > maxScore) {
-                        maxScore = frames;
-                        score.innerText = maxScore;
-                        console.log(`new max score of ${maxScore}`);
-                    }
-                    frames = 0;
+            // Gameover
+            if (starField.lines().length === 0 && frames >= 90) {
+                if (frames > maxScore) {
+                    maxScore = frames;
                 }
-                frames++;
+                score.innerText = `Your Score: ${frames}\r\nHi Score: ${maxScore}`;
+                showGameOver();
+                if (timeout) {
+                    clearTimeout(timeout);
+                }
+                timeout = setTimeout(hideGameOver, 2500);
+                frames = 0;
             }
+            frames++;
         });
 
     </script>
-    <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="andrewboudreau" data-color="#FFDD00" data-emoji="" data-font="Poppins" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#ffffff"></script>
+    <!--<script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="andrewboudreau" data-color="#FFDD00" data-emoji="" data-font="Poppins" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#ffffff"></script>-->
 </body>
 </html>

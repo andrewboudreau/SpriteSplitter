@@ -5,12 +5,16 @@ const CanvasMouseMoveHandler = (canvas) => {
     // Get the bounding client rect of the canvas element
     const rect = canvas.getBoundingClientRect();
 
-    const draw = ctx => {
+    const draw = (ctx, text) => {
         if (mouse.mouseOverCanvas) {
             ctx.font = '12px sans-serif';
             ctx.textAlign = 'center';
             ctx.fillStyle = 'white';
-            ctx.fillText(`(${Math.round(mouse.x)}, ${Math.round(mouse.y)})`, mouse.x, mouse.y);
+            if (!text) {
+                text = () => `(${Math.round(mouse.x)}, ${Math.round(mouse.y)})`;
+            }
+            ctx.fillText(text(), mouse.x, mouse.y);
+            
             ctx.fillStyle = "#ff0000";
             ctx.fillRect(mouse.x, mouse.y, 4, 4);
         }
