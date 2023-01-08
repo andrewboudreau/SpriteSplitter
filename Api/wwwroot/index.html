@@ -270,7 +270,7 @@
             }
 
             frames++;
-            if (frames % 3 == 0) {
+            if (frames % 2 == 0) {
                 connection.invoke("mouse", { x: mouse.x, y: mouse.y, score: frames })
             }
         });
