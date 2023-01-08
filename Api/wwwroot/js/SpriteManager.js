@@ -135,9 +135,9 @@ const SpriteManager = canvas => {
                     // Draw a circle at the center of the sprite
                     ctx.beginPath();
                     ctx.arc(this.position.x, this.position.y, 5, 0, Math.PI * 2);
-                    ctx.fillStyle = 'red';
-                    ctx.fill();
                     ctx.closePath();
+                    ctx.fillStyle = "red";
+                    ctx.fill();
 
                     // Draw a line to each corner of the bounding box
                     ctx.beginPath();

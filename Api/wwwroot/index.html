@@ -163,8 +163,23 @@
     </script>
     <script>
 
+        let connected = false;
         let timeout = null;
         let hideTimeout = null;
+        let enemy = null;
+
+        let connection = new signalR.HubConnectionBuilder()
+            .withUrl("/shapeHub")
+            .build();
+
+        connection.on("mouse", data => {
+            enemy = data;
+        });
+
+        connection.start()
+            .then(() => connected = true);
+
+
         function showGameOver() {
             gameover.classList.add('open');
             gameover.classList.remove('closed');
@@ -222,20 +237,19 @@
         const game = GameEngine(canvas);
         const starField = StarField(canvas);
         const spriteManager = SpriteManager(canvas);
-        let enemy = null;
 
-        const drawEnemy = (ctx, enemy) => {
+        const drawEnemy = (ctx) => {
             if (enemy) {
                 ctx.font = '12px sans-serif';
                 ctx.textAlign = 'center';
                 ctx.fillStyle = 'white';
-                ctx.fillText(enemy.score ?? "0", enemy.x - 7, enemy.y);
+                ctx.fillText(enemy.score ?? "0", enemy.x, enemy.y-15);
 
                 ctx.beginPath();
-                ctx.arc(enemy.x, enemy.y, 0, -15, Math.PI * 2);
-                ctx.fillStyle = 'orange';
-                ctx.fill();
+                ctx.arc(enemy.x, enemy.y, 5, 0, Math.PI * 2);
                 ctx.closePath();
+                ctx.fillStyle = "red";
+                ctx.fill();
             }
         };
 
@@ -253,7 +267,7 @@
             starField.draw(ctx);
             spriteManager.draw(ctx);
             mouse.draw(ctx, () => frames);
-            drawEnemy(ctx, enemy);
+            drawEnemy(ctx);
 
             // Gameover
             if (starField.lines().length === 0 && frames >= 90) {
@@ -270,24 +284,11 @@
             }
 
             frames++;
-            if (frames % 2 == 0) {
+            if (connected && frames % 2 == 0) {
                 connection.invoke("mouse", { x: mouse.x, y: mouse.y, score: frames })
             }
         });
 
-    </script>
-
-    <script>
-        let connection = new signalR.HubConnectionBuilder()
-            .withUrl("/shapeHub")
-            .build();
-
-        connection.on("mouse", data => {
-            enemy = data;
-        });
-
-        connection.start()
-            .then(() => connection.invoke("mouse", { x: mouse.x, y: mouse.y }));
     </script>
 
     <script type="text/javascript"
