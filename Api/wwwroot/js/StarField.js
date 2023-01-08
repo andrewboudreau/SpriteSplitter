@@ -31,7 +31,7 @@
             // and give it a new random color
             if (star.x > canvas.width) {
                 if (star.color === white) {
-                    frames -= 10;
+                    frames -= 5;
                 }
 
                 star.x = 0;
