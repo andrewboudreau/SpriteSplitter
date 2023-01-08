@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.IO.Compression;
 
-namespace SpriteSplitter
+namespace SpriteSplitter.Tools
 {
     public class Folder
     {
@@ -25,6 +25,12 @@ namespace SpriteSplitter
 
         private int OutputId => Interlocked.Increment(ref outputId);
 
+        /// <summary>
+        /// Create a folder for outputting stuff.
+        /// </summary>
+        /// <param name="prefix">the output resource name, i.e. 'sprites'</param>
+        /// <param name="resource">the input resource identifier i.e. '/folder/guid.png'</param>
+        /// <param name="options">Unique initial conditions that name the output.i.e. 12, 154. Values are appended to the folder name.</param>
         public Folder(string prefix, string resource, params object[] options)
         {
             Names = new ConcurrentDictionary<string, int>(Environment.ProcessorCount * 4, 64);
@@ -138,6 +144,21 @@ namespace SpriteSplitter
             return file;
         }
 
+        public async Task<string> AppendTo(string fileName, Func<string, Task<string>> appendTo)
+        {
+            var file = Path.Combine(FolderPath, fileName);
+            history.Add(file);
+            await appendTo(file);
+            return file;
+        }
+
+        public void AppendTo(string fileName, Action<string> appendTo)
+        {
+            var file = Path.Combine(FolderPath, fileName);
+            history.Add(file);
+            appendTo(file);
+        }
+
         public string CompressFolder(Func<string, bool>? filter = default)
         {
             var zipFilePath = Path.Combine(FolderPath, ResourceName + ".zip");
@@ -150,7 +171,7 @@ namespace SpriteSplitter
 
             foreach (string file in History.Where(filter ?? (x => true)))
                 zip.CreateEntryFromFile(file, Path.GetFileName(file));
-            
+
             return zipFilePath;
         }
 

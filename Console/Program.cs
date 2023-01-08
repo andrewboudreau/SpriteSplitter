@@ -1,4 +1,4 @@
-﻿using SpriteSplitter;
+﻿using SpriteSplitter.Tools;
 
 using System.Drawing;
 using System.Drawing.Imaging;

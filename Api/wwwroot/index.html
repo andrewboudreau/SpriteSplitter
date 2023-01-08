@@ -169,11 +169,15 @@
         let enemy = null;
 
         let connection = new signalR.HubConnectionBuilder()
-            .withUrl("/shapeHub")
+            .withUrl("/SpaceSpider")
             .build();
 
         connection.on("mouse", data => {
             enemy = data;
+        });
+
+        connection.on("highscore", value => {
+            maxScore = value;
         });
 
         connection.start()
@@ -273,6 +277,9 @@
             if (starField.lines().length === 0 && frames >= 90) {
                 if (frames > maxScore) {
                     maxScore = frames;
+                    if (connected) {
+                        connection.invoke("highscore", maxScore)
+                    }
                 }
                 score.innerText = `Your Score: ${frames}\r\nHi Score: ${maxScore}`;
                 showGameOver();
