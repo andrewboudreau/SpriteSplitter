@@ -5,6 +5,9 @@
     const stars = [];
     let lines = [];
     let target = { x: 500, y: 500 };
+    const white = { r: 255, g: 255, b: 255 };
+    const green = { r: 0, g: 255, b: 0 };
+    const purple = { r: 255, g: 0, b: 255 };
 
     // Create a random number of stars
     for (let i = 0; i < numberOfStars; i++) {
@@ -13,7 +16,7 @@
             y: Math.random() * canvas.height,
             radius: Math.random() * 2 + 1,
             alpha: Math.random(),
-            color: '#fff',
+            color: white
         });
     }
 
@@ -27,10 +30,15 @@
             // If the star goes off the bottom of the screen, wrap it around to the top
             // and give it a new random color
             if (star.x > canvas.width) {
+                if (star.color === white) {
+                    frames -= 10;
+                }
+
                 star.x = 0;
                 star.y = Math.random() * canvas.height;
                 star.radius = Math.random() * 2 + 1;
                 star.alpha = Math.random();
+                star.color = white;
             }
 
             if (after) {
@@ -39,6 +47,11 @@
 
             star.distanceToTarget = Math.sqrt((target.x - star.x) ** 2 + (target.y - star.y) ** 2);
             insertIfNearest(lines, star);
+        }
+
+        // connected stars
+        for (let i = 0; i < lines.length; i++) {
+            lines[i].color = purple;
         }
     };
 
@@ -49,7 +62,7 @@
             ctx.beginPath();
             ctx.arc(stars[i].x, stars[i].y, stars[i].radius, 0, Math.PI * 2);
             ctx.closePath();
-            ctx.fillStyle = `rgba(255, 255, 255, ${stars[i].alpha})`;
+            ctx.fillStyle = `rgba(${stars[i].color.r}, ${stars[i].color.g}, ${stars[i].color.b}, ${stars[i].alpha})`;
             ctx.fill();
         }
 
@@ -69,11 +82,11 @@
 
         // Draw the line
         ctx.beginPath();
-            ctx.strokeStyle = `rgba(255, 255, 255, ${100/star.distanceToTarget})`;
-            ctx.lineWidth = Math.min(3, 300 / star.distanceToTarget);
-            ctx.moveTo(x1, y1);
-            ctx.lineTo(x2, y2);
-            ctx.stroke();
+        ctx.strokeStyle = `rgba(255, 255, 255, ${100 / star.distanceToTarget})`;
+        ctx.lineWidth = Math.min(3, 300 / star.distanceToTarget);
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
         ctx.closePath();
     };
 

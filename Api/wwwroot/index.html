@@ -126,6 +126,7 @@
             bottom: 10px;
             left: 20px;
             opacity: .75;
+            display:none;
         }
     </style>
 </head>
@@ -142,6 +143,7 @@
         YOU DIED
         <small id="score">0</small>
     </div>
+    <div id="foo"></div>
     <script src="js/CanvasResizeHandler.js"></script>
     <script src="js/CanvasMouseMoveHandler.js"></script>
 
@@ -251,6 +253,24 @@
         });
 
     </script>
-    <!--<script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="andrewboudreau" data-color="#FFDD00" data-emoji="" data-font="Poppins" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#ffffff"></script>-->
+    <script type="text/javascript" 
+        src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" 
+        data-name="bmc-button" 
+        data-slug="andrewboudreau" 
+        data-color="#FFDD00" 
+        data-emoji="" 
+        data-font="Poppins" 
+        data-text="Buy me a coffee" 
+        data-outline-color="#000000" 
+        data-font-color="#000000" 
+        data-coffee-color="#ffffff"></script>
+    <script>
+        setTimeout(() => {
+            document.querySelector('.bmc-btn-container').style.display = "block";
+            setTimeout(() => {
+                document.querySelector('.bmc-btn-container').style.display = "none";
+            }, 60000);
+        }, 30000);
+    </script>
 </body>
 </html>
