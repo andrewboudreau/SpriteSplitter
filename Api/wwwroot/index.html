@@ -247,7 +247,7 @@
                 ctx.font = '12px sans-serif';
                 ctx.textAlign = 'center';
                 ctx.fillStyle = 'white';
-                ctx.fillText(enemy.score ?? "0", enemy.x, enemy.y-15);
+                ctx.fillText(enemy.score ?? "0", enemy.x, enemy.y - 15);
 
                 ctx.beginPath();
                 ctx.arc(enemy.x, enemy.y, 5, 0, Math.PI * 2);
@@ -258,43 +258,46 @@
         };
 
         // Main loop
-        game.loop((ctx, paused) => {
-            if (paused)
-                return;
+        game.loop(
+            (ctx, paused) => {
+                if (paused) return;
 
-            // Update the StarField and SpriteManager
-            spriteManager.update();
-            starField.setTarget(mouse);
-            starField.update();
+                // Draw the StarField and SpriteManager on the canvas
+                starField.draw(ctx);
+                spriteManager.draw(ctx);
+                mouse.draw(ctx, () => frames);
+                drawEnemy(ctx);
+            },
+            (paused) => {
+                if (paused) return;
 
-            // Draw the StarField and SpriteManager on the canvas
-            starField.draw(ctx);
-            spriteManager.draw(ctx);
-            mouse.draw(ctx, () => frames);
-            drawEnemy(ctx);
+                // Update the StarField and SpriteManager
+                spriteManager.update();
+                starField.setTarget(mouse);
+                starField.update();
 
-            // Gameover
-            if (starField.lines().length === 0 && frames >= 90) {
-                if (frames > maxScore) {
-                    maxScore = frames;
-                    if (connected) {
-                        connection.invoke("highscore", maxScore)
+                // Gameover
+                if (starField.lines().length === 0 && frames >= 90) {
+                    if (frames > maxScore) {
+                        maxScore = frames;
+                        if (connected) {
+                            connection.invoke("highscore", maxScore)
+                        }
                     }
+                    score.innerText = `Your Score: ${frames}\r\nHi Score: ${maxScore}`;
+                    showGameOver();
+                    if (timeout) {
+                        clearTimeout(timeout);
+                    }
+                    timeout = setTimeout(hideGameOver, 2500);
+                    frames = 0;
                 }
-                score.innerText = `Your Score: ${frames}\r\nHi Score: ${maxScore}`;
-                showGameOver();
-                if (timeout) {
-                    clearTimeout(timeout);
-                }
-                timeout = setTimeout(hideGameOver, 2500);
-                frames = 0;
-            }
 
-            frames++;
-            if (connected && frames % 2 == 0) {
-                connection.invoke("mouse", { x: mouse.x, y: mouse.y, score: frames })
-            }
-        });
+                frames++;
+                if (connected && frames % 2 == 0) {
+                    connection.invoke("mouse", { x: mouse.x, y: mouse.y, score: frames })
+                }
+            });
 
     </script>
 

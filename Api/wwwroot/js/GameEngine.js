@@ -1,14 +1,19 @@
 ﻿const GameEngine = (canvas) => {
     let pause = false;
     let running = false;
-    let game = null;
+    let draw = null;
+    let update = null;
 
     const ctx = canvas.getContext("2d");
 
     const loop = () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        game(ctx, pause);
+        // compute
+        update(pause);
+
+        // draw
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        draw(ctx, pause);
 
         // Request the next frame
         requestAnimationFrame(loop);
@@ -22,13 +27,14 @@
     return {
         getContext: () => ctx,
         pause: () => { pause = !pause; return pause; },
-        loop: userloop => {
+        loop: (drawLoop, updateLoop) => {
             if (running) {
                 alert("Already running");
                 return;
             }
             running = true;
-            game = userloop;
+            draw = drawLoop;
+            update = updateLoop;
             loop();
         }
     };

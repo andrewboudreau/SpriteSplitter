@@ -4,8 +4,6 @@ using SpriteSplitter.Tools;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
@@ -19,24 +17,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-app.UseHttpsRedirection();
-
-app.MapGet("prepare/{uri}", (Uri? imageUrl) =>
-{
-    Console.WriteLine(imageUrl);
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new
-        {
-            Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Value = Random.Shared.Next(-20, 55),
-            Id = Guid.NewGuid().ToString()
-        })
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
 
 string splitterHtml = File.ReadAllText(@"wwwroot/splitter.html");
 string viewerHtml = File.ReadAllText(@"wwwroot/viewer.html");
