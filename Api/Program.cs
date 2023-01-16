@@ -42,9 +42,11 @@ public class SpaceSpider : Hub
 {
     public record Position(int X, int Y, int Score);
 
+    public record Player(int Id, int X, int Y, int Score);
+
     public async Task Mouse(Position position)
     {
-        await Clients.Others.SendAsync("mouse", position);
+        await Clients.Others.SendAsync("mouse", new Player(Context.ConnectionId.GetHashCode(), position.X, position.Y, position.Score));
     }
 
     public async Task HighScore(int score, Folder folder)

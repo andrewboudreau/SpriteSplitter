@@ -172,8 +172,9 @@
             .withUrl("/SpaceSpider")
             .build();
 
+        let enemies = {};
         connection.on("mouse", data => {
-            enemy = data;
+            enemies[data.id] = { x: data.x, y: data.y, score: data.score, lastUpdate: new Date() };
         });
 
         connection.on("highscore", value => {
@@ -182,7 +183,6 @@
 
         connection.start()
             .then(() => connected = true);
-
 
         function showGameOver() {
             gameover.classList.add('open');
@@ -243,14 +243,14 @@
         const spriteManager = SpriteManager(canvas);
 
         const drawEnemy = (ctx) => {
-            if (enemy) {
+            for (let key in enemies) {
                 ctx.font = '12px sans-serif';
                 ctx.textAlign = 'center';
                 ctx.fillStyle = 'white';
-                ctx.fillText(enemy.score ?? "0", enemy.x, enemy.y - 15);
+                ctx.fillText(enemies[key].score ?? "0", enemies[key].x, enemies[key].y - 15);
 
                 ctx.beginPath();
-                ctx.arc(enemy.x, enemy.y, 5, 0, Math.PI * 2);
+                ctx.arc(enemies[key].x, enemies[key].y, 5, 0, Math.PI * 2);
                 ctx.closePath();
                 ctx.fillStyle = "red";
                 ctx.fill();
@@ -263,10 +263,10 @@
                 if (paused) return;
 
                 // Draw the StarField and SpriteManager on the canvas
+                drawEnemy(ctx);
                 starField.draw(ctx);
                 spriteManager.draw(ctx);
                 mouse.draw(ctx, () => frames);
-                drawEnemy(ctx);
             },
             (paused) => {
                 if (paused) return;
