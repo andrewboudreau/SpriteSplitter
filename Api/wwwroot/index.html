@@ -168,13 +168,16 @@
         let hideTimeout = null;
         let enemy = null;
 
+        let frames = 0;
+        let maxScore = 0;
+
         let connection = new signalR.HubConnectionBuilder()
             .withUrl("/SpaceSpider")
             .build();
 
         let enemies = {};
         connection.on("mouse", data => {
-            enemies[data.id] = { x: data.x, y: data.y, score: data.score, lastUpdate: new Date() };
+            enemies[data.id] = { x: data.x, y: data.y, score: data.score, lastUpdate: frames };
         });
 
         connection.on("highscore", value => {
@@ -212,8 +215,7 @@
             hideTimeout = setTimeout(() => element.style = "display:none;", 1000);
         }
 
-        let frames = 0;
-        let maxScore = 0;
+        
 
         const canvas = document.getElementById("canvas");
         const hero = document.getElementById("hero");
@@ -254,6 +256,11 @@
                 ctx.closePath();
                 ctx.fillStyle = "red";
                 ctx.fill();
+
+                if (frames - enemies[key].lastUpdate > 60) {
+                    console.log("removing " + key + " last updated frames ago: " + frames - enemies[key].lastUpdate);
+                    delete enemies[key];
+                }
             }
         };
 
