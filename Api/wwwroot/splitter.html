@@ -26,6 +26,78 @@
             overflow-y:scroll;
             overflow-x:clip;
         }
+        
+        .control-panel {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            width: 250px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .sprite-thumbnails {
+            max-height: 300px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .sprite-thumbnail {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .sprite-thumbnail:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .sprite-thumbnail img {
+            width: 100%;
+            height: auto;
+        }
+
+        .sprite-info {
+            font-size: 12px;
+            text-align: center;
+            margin-top: 5px;
+        }
+        
+        #sprite-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .extracted-sprite {
+            border: 1px solid #ccc;
+            padding: 5px;
+            background-color: #f0f0f0;
+            cursor: pointer;
+        }
+        
+        .extracted-sprite.selected {
+            border-color: #ff0000;
+            background-color: #ffe0e0;
+        }
     </style>
 </head>
 <body>
@@ -40,6 +112,36 @@
     <input type="text" value="https://cdn.discordapp.com/attachments/1058940055072284762/1059281630725939220/andrewb_a_prep_school_hacker_45586c77-0802-45eb-b0c3-c86ba14d31a3.png" />
     <pre id="result"></pre>
     <canvas id="canvas" style="position: relative; top: 0; left: 0;"></canvas>
+
+    <div id="sprite-controls" class="control-panel">
+      <div class="control-group">
+        <label for="threshold-slider">Color Threshold:</label>
+        <input type="range" id="threshold-slider" min="0" max="100" value="30">
+        <span id="threshold-value">30</span>
+      </div>
+      
+      <div class="control-group">
+        <label for="min-sprite-size">Minimum Sprite Size:</label>
+        <input type="number" id="min-sprite-size" min="1" value="10">
+      </div>
+      
+      <div class="control-group">
+        <button id="toggle-mask">Toggle Mask</button>
+        <button id="toggle-overlay">Toggle Overlay</button>
+      </div>
+      
+      <div class="control-group">
+        <button id="zoom-in">Zoom In</button>
+        <button id="zoom-out">Zoom Out</button>
+        <span id="zoom-level">100%</span>
+      </div>
+      
+      <div class="control-group">
+        <button id="process-sprites">Process Sprites</button>
+      </div>
+    </div>
+
+    <div id="sprite-list"></div>
 
     <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank" onclick="this.style = 'display:none'">
         <input type="hidden" name="cmd" value="_s-xclick">
@@ -188,6 +290,360 @@
                 }
             }
         };
+    </script>
+    
+    <script>
+        // UI Controller for sprite processing
+        const SpriteUIController = () => {
+            let threshold = 30;
+            let minSpriteSize = 10;
+            let showMask = true;
+            let showOverlay = true;
+            let zoomLevel = 1.0;
+            let originalImage = null;
+            let spriteMask = null;
+            let extractedSprites = [];
+            let selectedSpriteIndex = -1;
+            
+            // Initialize UI controls
+            const init = () => {
+                // Threshold slider
+                const thresholdSlider = document.getElementById('threshold-slider');
+                const thresholdValue = document.getElementById('threshold-value');
+                
+                thresholdSlider.addEventListener('input', (e) => {
+                    threshold = parseInt(e.target.value);
+                    thresholdValue.textContent = threshold;
+                });
+                
+                // Min sprite size input
+                const minSpriteSizeInput = document.getElementById('min-sprite-size');
+                minSpriteSizeInput.addEventListener('change', (e) => {
+                    minSpriteSize = parseInt(e.target.value);
+                });
+                
+                // Toggle buttons
+                document.getElementById('toggle-mask').addEventListener('click', () => {
+                    showMask = !showMask;
+                    updateDisplay();
+                });
+                
+                document.getElementById('toggle-overlay').addEventListener('click', () => {
+                    showOverlay = !showOverlay;
+                    updateDisplay();
+                });
+                
+                // Zoom controls
+                document.getElementById('zoom-in').addEventListener('click', () => {
+                    zoomLevel = Math.min(zoomLevel * 1.2, 5.0);
+                    document.getElementById('zoom-level').textContent = `${Math.round(zoomLevel * 100)}%`;
+                    updateDisplay();
+                });
+                
+                document.getElementById('zoom-out').addEventListener('click', () => {
+                    zoomLevel = Math.max(zoomLevel / 1.2, 0.2);
+                    document.getElementById('zoom-level').textContent = `${Math.round(zoomLevel * 100)}%`;
+                    updateDisplay();
+                });
+                
+                // Process button
+                document.getElementById('process-sprites').addEventListener('click', processSprites);
+                
+                // Hook into the existing button click event
+                const originalButtonClick = document.getElementById('button').onclick;
+                document.getElementById('button').onclick = function(e) {
+                    originalButtonClick.call(this, e);
+                    // After the original handler runs, store the image for our UI
+                    if (images.lastChild) {
+                        originalImage = images.lastChild;
+                        updateDisplay();
+                    }
+                };
+            };
+            
+            // Update the display based on current settings
+            const updateDisplay = () => {
+                if (!originalImage) return;
+                
+                const ctx = canvas.getContext('2d');
+                
+                // Clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Calculate scaled dimensions
+                const scaledWidth = canvas.width * zoomLevel;
+                const scaledHeight = (originalImage.height / originalImage.width) * scaledWidth;
+                
+                // Draw the base image
+                ctx.drawImage(originalImage, 0, 0, scaledWidth, scaledHeight);
+                
+                // Draw mask if enabled
+                if (showMask && spriteMask) {
+                    for (let y = 0; y < spriteMask.length; y++) {
+                        for (let x = 0; x < spriteMask[y].length; x++) {
+                            if (spriteMask[y][x]) {
+                                const pixelSize = zoomLevel;
+                                ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+                                ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
+                            }
+                        }
+                    }
+                }
+                
+                // Draw overlay if enabled
+                if (showOverlay && extractedSprites.length > 0) {
+                    ctx.strokeStyle = 'rgba(0, 255, 0, 0.8)';
+                    ctx.lineWidth = 2;
+                    
+                    extractedSprites.forEach((sprite, index) => {
+                        ctx.beginPath();
+                        ctx.rect(
+                            sprite.x * zoomLevel, 
+                            sprite.y * zoomLevel, 
+                            sprite.width * zoomLevel, 
+                            sprite.height * zoomLevel
+                        );
+                        
+                        if (index === selectedSpriteIndex) {
+                            ctx.strokeStyle = 'rgba(255, 255, 0, 0.8)';
+                            ctx.lineWidth = 3;
+                        } else {
+                            ctx.strokeStyle = 'rgba(0, 255, 0, 0.8)';
+                            ctx.lineWidth = 2;
+                        }
+                        
+                        ctx.stroke();
+                        
+                        // Add sprite number
+                        ctx.fillStyle = 'white';
+                        ctx.font = '12px Arial';
+                        ctx.fillText(
+                            `#${index + 1}`, 
+                            (sprite.x + 5) * zoomLevel, 
+                            (sprite.y + 15) * zoomLevel
+                        );
+                    });
+                }
+            };
+            
+            // Process sprites with current settings
+            const processSprites = () => {
+                if (!originalImage) {
+                    alert('Please load an image first');
+                    return;
+                }
+                
+                // Create a temporary canvas to process the image
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCanvas.width = originalImage.width;
+                tempCanvas.height = originalImage.height;
+                tempCtx.drawImage(originalImage, 0, 0);
+                
+                // Get the pixel data
+                const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                
+                // Find the color at the specified location (x=3, y=3)
+                const targetColor = getColorAt(imageData, 3, 3);
+                
+                // Create a 2D boolean array indicating whether each pixel in the image is similar to the target color
+                spriteMask = createSimilarColorArray(imageData, targetColor, threshold);
+                
+                // Find sprite boundaries
+                extractedSprites = findSpriteBoundaries(spriteMask, minSpriteSize);
+                
+                // Display the sprites
+                displayExtractedSprites();
+                
+                // Update the display
+                updateDisplay();
+            };
+            
+            // Function to find sprite boundaries in the mask
+            const findSpriteBoundaries = (mask, minSize) => {
+                const sprites = [];
+                const visited = Array(mask.length).fill().map(() => Array(mask[0].length).fill(false));
+                
+                for (let y = 0; y < mask.length; y++) {
+                    for (let x = 0; x < mask[y].length; x++) {
+                        if (!mask[y][x] && !visited[y][x]) {
+                            // Found a potential sprite pixel
+                            const bounds = {
+                                minX: x, maxX: x,
+                                minY: y, maxY: y
+                            };
+                            
+                            // Use flood fill to find connected pixels
+                            const stack = [{x, y}];
+                            visited[y][x] = true;
+                            let pixelCount = 0;
+                            
+                            while (stack.length > 0) {
+                                const pixel = stack.pop();
+                                pixelCount++;
+                                
+                                // Update bounds
+                                bounds.minX = Math.min(bounds.minX, pixel.x);
+                                bounds.maxX = Math.max(bounds.maxX, pixel.x);
+                                bounds.minY = Math.min(bounds.minY, pixel.y);
+                                bounds.maxY = Math.max(bounds.maxY, pixel.y);
+                                
+                                // Check neighbors
+                                const directions = [
+                                    {dx: -1, dy: 0}, {dx: 1, dy: 0},
+                                    {dx: 0, dy: -1}, {dx: 0, dy: 1}
+                                ];
+                                
+                                for (const dir of directions) {
+                                    const nx = pixel.x + dir.dx;
+                                    const ny = pixel.y + dir.dy;
+                                    
+                                    if (nx >= 0 && nx < mask[0].length && 
+                                        ny >= 0 && ny < mask.length && 
+                                        !mask[ny][nx] && !visited[ny][nx]) {
+                                        stack.push({x: nx, y: ny});
+                                        visited[ny][nx] = true;
+                                    }
+                                }
+                            }
+                            
+                            // Only add sprites larger than the minimum size
+                            const width = bounds.maxX - bounds.minX + 1;
+                            const height = bounds.maxY - bounds.minY + 1;
+                            if (width >= minSize && height >= minSize) {
+                                sprites.push({
+                                    x: bounds.minX,
+                                    y: bounds.minY,
+                                    width,
+                                    height,
+                                    pixelCount
+                                });
+                            }
+                        }
+                    }
+                }
+                
+                return sprites;
+            };
+            
+            // Display thumbnails of extracted sprites
+            const displayExtractedSprites = () => {
+                const spriteList = document.getElementById('sprite-list');
+                spriteList.innerHTML = '';
+                
+                if (extractedSprites.length === 0) {
+                    spriteList.innerHTML = '<p>No sprites found. Try adjusting the threshold.</p>';
+                    return;
+                }
+                
+                // Create a temporary canvas for extracting sprite images
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                extractedSprites.forEach((sprite, index) => {
+                    // Set up the temporary canvas for this sprite
+                    tempCanvas.width = sprite.width;
+                    tempCanvas.height = sprite.height;
+                    tempCtx.clearRect(0, 0, sprite.width, sprite.height);
+                    
+                    // Draw just this sprite portion
+                    tempCtx.drawImage(
+                        originalImage,
+                        sprite.x, sprite.y, sprite.width, sprite.height,
+                        0, 0, sprite.width, sprite.height
+                    );
+                    
+                    // Create a thumbnail element
+                    const thumbnail = document.createElement('div');
+                    thumbnail.className = 'extracted-sprite';
+                    if (index === selectedSpriteIndex) {
+                        thumbnail.className += ' selected';
+                    }
+                    
+                    // Create an image from the canvas
+                    const spriteImg = document.createElement('img');
+                    spriteImg.src = tempCanvas.toDataURL();
+                    spriteImg.alt = `Sprite ${index + 1}`;
+                    spriteImg.style.maxWidth = '100px';
+                    spriteImg.style.maxHeight = '100px';
+                    
+                    // Add info text
+                    const spriteInfo = document.createElement('div');
+                    spriteInfo.textContent = `#${index + 1}: ${sprite.width}×${sprite.height}`;
+                    
+                    thumbnail.appendChild(spriteImg);
+                    thumbnail.appendChild(spriteInfo);
+                    
+                    // Add click handler to select this sprite
+                    thumbnail.addEventListener('click', () => {
+                        selectedSpriteIndex = index;
+                        // Update the UI to show this sprite is selected
+                        document.querySelectorAll('.extracted-sprite').forEach(el => {
+                            el.classList.remove('selected');
+                        });
+                        thumbnail.classList.add('selected');
+                        updateDisplay();
+                    });
+                    
+                    spriteList.appendChild(thumbnail);
+                });
+            };
+            
+            // Function to get the color at a specific location in an ImageData object
+            function getColorAt(imageData, x, y) {
+                // Get the index of the pixel in the data array
+                const index = (y * imageData.width + x) * 4;
+                
+                // Get the red, green, and blue values of the pixel
+                const r = imageData.data[index];
+                const g = imageData.data[index + 1];
+                const b = imageData.data[index + 2];
+                
+                return { r, g, b };
+            }
+            
+            // Function to create a 2D boolean array indicating whether each pixel in an ImageData object is similar to a given color
+            function createSimilarColorArray(imageData, color, threshold) {
+                // Create an empty 2D array
+                const array = [];
+                for (let y = 0; y < imageData.height; y++) {
+                    array.push(new Array(imageData.width));
+                }
+                
+                // Loop through the pixels in the image and set the corresponding element in the array to true if the pixel is similar to the target color
+                const data = imageData.data;
+                for (let y = 0; y < imageData.height; y++) {
+                    for (let x = 0; x < imageData.width; x++) {
+                        const index = (y * imageData.width + x) * 4;
+                        const r = data[index];
+                        const g = data[index + 1];
+                        const b = data[index + 2];
+                        
+                        // Calculate color distance
+                        const distance = Math.sqrt(
+                            Math.pow(r - color.r, 2) +
+                            Math.pow(g - color.g, 2) +
+                            Math.pow(b - color.b, 2)
+                        );
+                        
+                        // Mark as true if the color is similar to the target color (within threshold)
+                        array[y][x] = distance <= threshold;
+                    }
+                }
+                
+                return array;
+            }
+            
+            return {
+                init
+            };
+        };
+        
+        // Initialize the UI controller when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            const uiController = SpriteUIController();
+            uiController.init();
+        });
     </script>
 </body>
 
