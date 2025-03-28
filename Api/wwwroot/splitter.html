@@ -164,22 +164,66 @@
         dropzone.addEventListener('dragover', function (event) {
             // Prevent the default action (open as link for some elements)
             event.preventDefault();
+            // Add visual feedback
+            dropzone.style.backgroundColor = '#f0f0f0';
+        });
+
+        // Add a "dragleave" event listener to reset the visual feedback
+        dropzone.addEventListener('dragleave', function (event) {
+            dropzone.style.backgroundColor = '';
         });
 
         // Add a "drop" event listener to the dropzone element
         dropzone.addEventListener('drop', function (event) {
             // Prevent the default action (open as link for some elements)
             event.preventDefault();
+            // Reset visual feedback
+            dropzone.style.backgroundColor = '';
 
             // Get the file(s) that were dropped
             const files = event.dataTransfer.files;
 
             // Process the file(s)
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                console.log(`File ${i + 1}: ${file.name} (${file.type}, ${file.size} bytes)`);
-
-                // Do something with the file...
+            if (files.length > 0) {
+                const file = files[0];
+                console.log(`File: ${file.name} (${file.type}, ${file.size} bytes)`);
+                
+                if (file.type.match('image.*')) {
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        // Create an Image object
+                        const image = new Image();
+                        image.src = e.target.result;
+                        
+                        image.onload = function() {
+                            // Clear previous images
+                            images.innerHTML = '';
+                            
+                            // Append the image to the DOM
+                            images.appendChild(image);
+                            
+                            // Set as original image for the UI controller
+                            originalImage = image;
+                            
+                            // Update canvas dimensions
+                            canvas.width = 400;
+                            canvas.height = Math.round((image.height / image.width) * canvas.width);
+                            
+                            // Draw the image on the canvas
+                            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+                            
+                            // If the UI controller is initialized, update the display
+                            if (window.uiController) {
+                                window.uiController.setOriginalImage(image);
+                            }
+                        };
+                    };
+                    
+                    reader.readAsDataURL(file);
+                } else {
+                    alert('Please drop an image file.');
+                }
             }
         });
 
@@ -214,31 +258,37 @@
 
         // JavaScript code to handle button click and perform image processing
         document.getElementById('button').addEventListener('click', function () {
-
             // Example usage: download an image from a URL, draw it on a canvas, and add the canvas to the document body
             createAndAppendImage(url.value).then(image => {
-
                 // Set the canvas width to 400 pixels and the height to maintain the image's aspect ratio
                 canvas.width = 400;
                 canvas.height = Math.round((image.height / image.width) * canvas.width);
 
-                createImageBitmap(image).then(bmp => {
+                // Draw the image on the canvas
+                ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
 
-                    // Draw the image on the canvas
-                    ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+                // Get the pixel data from the canvas
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-                    // Get the pixel data from the canvas
-                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                // Find the color at the specified location (x=3, y=3)
+                const color = getColorAt(imageData, 3, 3);
 
-                    // Find the color at the specified location (x=3, y=3)
-                    const color = getColorAt(imageData, 3, 3);
+                // Create a 2D boolean array indicating whether each pixel in the image is the same as the color at (x=3, y=3)
+                const sameColorArray = createSameColorArray(imageData, color);
 
-                    // Create a 2D boolean array indicating whether each pixel in the image is the same as the color at (x=3, y=3)
-                    const sameColorArray = createSameColorArray(imageData, color);
-
-                    // Display the resulting array
-                    document.getElementById('result').textContent = sameColorArray.length;
-                });
+                // Display the resulting array
+                document.getElementById('result').textContent = sameColorArray.length;
+                
+                // Set as original image for the UI controller
+                originalImage = image;
+                
+                // If the UI controller is initialized, update the display
+                if (window.uiController) {
+                    window.uiController.setOriginalImage(image);
+                }
+            }).catch(error => {
+                console.error('Error loading image:', error);
+                alert('Failed to load image. Please check the URL and try again.');
             });
         });
 
@@ -348,17 +398,12 @@
                 
                 // Process button
                 document.getElementById('process-sprites').addEventListener('click', processSprites);
-                
-                // Hook into the existing button click event
-                const originalButtonClick = document.getElementById('button').onclick;
-                document.getElementById('button').onclick = function(e) {
-                    originalButtonClick.call(this, e);
-                    // After the original handler runs, store the image for our UI
-                    if (images.lastChild) {
-                        originalImage = images.lastChild;
-                        updateDisplay();
-                    }
-                };
+            };
+            
+            // Set the original image
+            const setOriginalImage = (image) => {
+                originalImage = image;
+                updateDisplay();
             };
             
             // Update the display based on current settings
@@ -635,7 +680,8 @@
             }
             
             return {
-                init
+                init,
+                setOriginalImage
             };
         };
         
@@ -643,6 +689,14 @@
         document.addEventListener('DOMContentLoaded', () => {
             const uiController = SpriteUIController();
             uiController.init();
+            // Store the controller in the window object so it can be accessed by other functions
+            window.uiController = uiController;
+            
+            // Initialize the URL input with the default value
+            const urlInput = document.getElementById('url');
+            if (urlInput.value === '') {
+                urlInput.value = 'https://cdn.discordapp.com/attachments/1058940055072284762/1059281630725939220/andrewb_a_prep_school_hacker_45586c77-0802-45eb-b0c3-c86ba14d31a3.png';
+            }
         });
     </script>
 </body>
